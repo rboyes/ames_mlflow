@@ -1,3 +1,4 @@
+library(stringr)
 library(tidymodels)
 library(tune)
 library(AmesHousing)
@@ -48,7 +49,7 @@ xgb_grid <- grid_random(
   sample_size = sample_prop(),
   finalize(mtry(), df_train),
   learn_rate(),
-  size = 100
+  size = 50
 )
 
 wf_ames <- workflow() %>% add_recipe(ames_rec) %>% add_model(xgb_spec)
@@ -78,7 +79,14 @@ ames_model = carrier::crate(function(df) {
   model = wf_final
 )
 
-# Point to the MLFlow tracking system, where we'll store this run
+# Point to the MLFlow tracking system, where we'll store this run. Note MLFlow is largely driven off conda
+
+paths = unlist(Sys.getenv('PATH') %>% str_split(':'))
+
+conda_path = '/databricks/conda/bin'
+if(!(conda_path %in% paths)) {
+  Sys.setenv(PATH = paste(Sys.getenv('PATH'), conda_path, sep = ':'))  
+}
 
 library(mlflow)
 install_mlflow()

@@ -1,3 +1,5 @@
+library(mlflow)
+library(purrr)
 library(tidymodels)
 
 log_workflow_parameters <- function(workflow) {
@@ -10,7 +12,7 @@ log_workflow_parameters <- function(workflow) {
     parameter_name <- parameter_names[[i]]
     parameter_value <- parameter_values[[i]]
     if (!is.null(parameter_value)) {
-      mlflow_log_param(parameter_name, parameter_value)
+      mlflow::mlflow_log_param(parameter_name, parameter_value)
     }
   }
   return(workflow)
@@ -19,7 +21,7 @@ log_workflow_parameters <- function(workflow) {
 log_metrics <- function(metrics, estimator = "standard") {
   metrics %>% filter(.estimator == estimator) %>% pmap(
     function(.metric, .estimator, .estimate) {
-      mlflow_log_metric(.metric, .estimate)  
+      mlflow::mlflow_log_metric(.metric, .estimate)  
     }
   )
   return(metrics)
