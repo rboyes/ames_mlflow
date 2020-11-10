@@ -79,7 +79,8 @@ ames_model = carrier::crate(function(df) {
   model = wf_final
 )
 
-# Point to the MLFlow tracking system, where we'll store this run. Note MLFlow is largely driven off conda
+# Point to the MLFlow tracking system, where we'll store this run. Note MLFlow is largely driven off conda,
+# so we need to add it to our path.
 
 paths = unlist(Sys.getenv('PATH') %>% str_split(':'))
 
@@ -92,8 +93,9 @@ library(mlflow)
 install_mlflow()
 
 mlflow_set_tracking_uri('databricks')
-Sys.setenv(DATABRICKS_HOST = 'https://XXXXXX.azuredatabricks.net') # TODO remove
-Sys.setenv(DATABRICKS_TOKEN = 'XXXXXXX') # TODO remove
+
+Sys.setenv(DATABRICKS_HOST = 'https://adb-7177174267829242.2.azuredatabricks.net') # TODO remove
+Sys.setenv(DATABRICKS_TOKEN = '') # TODO remove
 
 experiment_id = mlflow_list_experiments() %>% filter(name == "/Users/richard.boyes@centrica.com/ames_housing") %>% pull(experiment_id)
 
@@ -102,3 +104,11 @@ with(mlflow_start_run(experiment_id = experiment_id), {
   log_metrics(df_metric)
   mlflow_log_model(ames_model, 'ames_housing')
 })
+
+json_test = df_test %>% select(-Sale_Price) %>% sample_n(1) %>% jsonlite::toJSON(na = "string")
+model_endpoint = 'https://adb-7177174267829242.2.azuredatabricks.net/model/ames_housing/1/invocations'
+
+httr::POST(url = model_endpoint, 
+           body = df_iris_test %>% sample_n(1), 
+           encode = 'json', 
+           add_headers(Authorization = str_glue('Bearer {Sys.getenv("DATABRICKS_TOKEN")}')))
